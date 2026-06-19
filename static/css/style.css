@@ -617,6 +617,7 @@ body {
 .feed-card-footer {
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
     margin-top: 1.25rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
@@ -630,7 +631,7 @@ body {
     transform: translateY(0);
 }
 
-.btn-card-tweet {
+.btn-card-tweet, .btn-card-copy {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
 }
@@ -983,4 +984,141 @@ body {
     .tweet-drawer.open {
         transform: translateY(0);
     }
+}
+
+/* Theme Toggle Button Styles */
+.btn-theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-theme-toggle:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.btn-theme-toggle .icon-sun {
+    display: block;
+}
+
+.btn-theme-toggle .icon-moon {
+    display: none;
+}
+
+/* Helper Class */
+.btn-full-width {
+    width: 100%;
+}
+
+/* Light Theme Variable Overrides */
+body.light-theme {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(15, 23, 42, 0.15);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --accent-glow: rgba(99, 102, 241, 0.08);
+    
+    --color-feature-bg: rgba(16, 185, 129, 0.08);
+    --color-issue-bg: rgba(239, 68, 68, 0.08);
+    --color-deprecation-bg: rgba(245, 158, 11, 0.08);
+    --color-announcement-bg: rgba(59, 130, 246, 0.08);
+    --color-notice-bg: rgba(6, 182, 212, 0.08);
+    --color-update-bg: rgba(148, 163, 184, 0.08);
+}
+
+/* Light Theme Element Fixes */
+body.light-theme .btn-theme-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme .btn-theme-toggle .icon-sun {
+    display: none;
+}
+
+body.light-theme .btn-theme-toggle .icon-moon {
+    display: block;
+}
+
+body.light-theme #searchInput {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme #searchInput:focus {
+    background-color: #ffffff;
+    border-color: var(--accent-color);
+}
+
+body.light-theme .tweet-textarea-wrapper {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme #tweetTextArea {
+    color: var(--text-primary);
+}
+
+body.light-theme .selected-note-preview {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme .feed-card-body code {
+    background-color: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .filter-tag-row:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme .tag-count {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .cache-status {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme .header-logo h1 {
+    background: linear-gradient(135deg, #0f172a 50%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.light-theme ::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.light-theme .spinner {
+    border: 3px solid rgba(0, 0, 0, 0.05);
+    border-top-color: var(--accent-color);
+}
+
+body.light-theme .drawer-tips {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+body.light-theme .toast {
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }

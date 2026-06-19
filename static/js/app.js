@@ -33,10 +33,11 @@ const drawerContentText = document.getElementById('drawerContentText');
 const tweetTextArea = document.getElementById('tweetTextArea');
 const charCount = document.getElementById('charCount');
 const charCounterContainer = document.getElementById('charCounter');
-const btnCopyTweet = document.getElementById('btnCopyTweet');
 const btnSendTweet = document.getElementById('btnSendTweet');
 const toastMessage = document.getElementById('toastMessage');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
 
 // Helper: Strip HTML tags from a string
 function stripHtml(html) {
@@ -57,6 +58,7 @@ function getBadgeClass(type) {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     fetchUpdates(false);
     setupEventListeners();
 });
@@ -94,6 +96,12 @@ function setupEventListeners() {
 
     // Clear filters button in empty state
     clearFiltersBtn.addEventListener('click', resetFilters);
+
+    // Theme Toggle action
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // Export to CSV action
+    exportCsvBtn.addEventListener('click', exportToCsv);
 }
 
 // Fetch Updates from flask API
@@ -304,6 +312,12 @@ function renderDashboard() {
                 ${item.content}
             </div>
             <div class="feed-card-footer">
+                <button class="btn btn-outline btn-card-copy" data-action="copy">
+                    <svg viewBox="0 0 24 24" width="12" height="12">
+                        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M8 17.75a3 3 0 0 0 3-3V11a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v3.75a3 3 0 0 0 3 3h3zm8-2h3a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h-3a3 3 0 0 0-3 3v3.75a3 3 0 0 0 3 3z"/>
+                    </svg>
+                    <span>Copy Text</span>
+                </button>
                 <button class="btn btn-twitter btn-card-tweet" data-action="tweet">
                     <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -317,6 +331,14 @@ function renderDashboard() {
         card.addEventListener('click', (e) => {
             // If click was on a link within the body, don't trigger card selection
             if (e.target.tagName === 'A' || e.target.closest('a')) {
+                return;
+            }
+            
+            // Check if copy button was clicked
+            const copyBtn = e.target.closest('[data-action="copy"]');
+            if (copyBtn) {
+                e.stopPropagation();
+                copyCardText(item, copyBtn);
                 return;
             }
             
@@ -471,4 +493,123 @@ function sendTweetToX() {
 
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
+}
+
+// Theme Initialization
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.body.classList.remove('dark-theme');
+    } else {
+        document.body.classList.add('dark-theme');
+        document.body.classList.remove('light-theme');
+    }
+}
+
+// Theme Toggle action
+function toggleTheme() {
+    if (document.body.classList.contains('light-theme')) {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.remove('dark-theme');
+        document.body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Export currently filtered release notes to a CSV file
+function exportToCsv() {
+    let filtered = updatesState.filter(item => {
+        const textMatch = !activeFilters.search || 
+            item.content.toLowerCase().includes(activeFilters.search) ||
+            item.type.toLowerCase().includes(activeFilters.search) ||
+            item.date.toLowerCase().includes(activeFilters.search);
+        const typeMatch = activeFilters.types.size === 0 || activeFilters.types.has(item.type);
+        return textMatch && typeMatch;
+    });
+
+    filtered.sort((a, b) => {
+        const dateA = new Date(a.updated || a.date);
+        const dateB = new Date(b.updated || b.date);
+        return activeFilters.sort === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
+    if (filtered.length === 0) {
+        alert("No updates to export!");
+        return;
+    }
+
+    const headers = ["ID", "Date", "Type", "Link", "Content"];
+    const rows = [headers];
+
+    filtered.forEach(item => {
+        const cleanContent = stripHtml(item.content).replace(/\s+/g, ' ').trim();
+        rows.push([
+            item.id,
+            item.date,
+            item.type,
+            item.link,
+            cleanContent
+        ]);
+    });
+
+    const csvString = rows.map(r => r.map(val => {
+        let cell = val === null || val === undefined ? '' : String(val);
+        cell = cell.replace(/"/g, '""');
+        if (cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r')) {
+            cell = `"${cell}"`;
+        }
+        return cell;
+    }).join(",")).join("\n");
+
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `bq_release_notes_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Copy specific release note card text to clipboard
+async function copyCardText(item, button) {
+    const cleanText = stripHtml(item.content).trim();
+    const textToCopy = `BigQuery Release Note (${item.date}) - ${item.type}\n\n${cleanText}\n\nLink: ${item.link}`;
+    
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        flashButtonText(button, 'Copied!');
+    } catch (err) {
+        console.error('Clipboard copy failed:', err);
+        // Fallback selection copy
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        flashButtonText(button, 'Copied!');
+    }
+}
+
+// Temporary button label swap animation
+function flashButtonText(button, newText) {
+    const span = button.querySelector('span');
+    const originalText = span.textContent;
+    span.textContent = newText;
+    button.style.borderColor = 'var(--color-feature)';
+    button.style.color = 'var(--color-feature)';
+    
+    setTimeout(() => {
+        span.textContent = originalText;
+        button.style.borderColor = '';
+        button.style.color = '';
+    }, 2000);
 }
